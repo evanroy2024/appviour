@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact | APPVIOUR</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  min-height:100vh;
+  background-image:url('images/1/bg.jpg');
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  font-family:'Inter',sans-serif;
+  display:flex;
+  flex-direction:column;
+  color:#111;
+  position:relative;
+}
+
+/* Light overlay */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(3px);
+  z-index:0;
+}
+
+.main{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:1300px;
+  margin:auto;
+  padding:60px 60px 40px;
+}
+
+/* TOP HEADING */
+
+.top-heading{
+  text-align:center;
+  margin-bottom:60px;
+}
+
+.top-heading h2{
+  font-family:'Playfair Display',serif;
+  font-size:3.2rem;
+  font-weight:500;
+  margin-bottom:10px;
+}
+
+.top-heading p{
+  color:#555;
+  font-size:15px;
+}
+
+/* GRID */
+
+.wrapper{
+  display:grid;
+  grid-template-columns:1fr 1.1fr;
+  gap:100px;
+  align-items:center;
+}
+
+/* FORM */
+
+.card{
+  background:rgba(255,255,255,0.92);
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:18px;
+  padding:60px 55px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.12);
+  transition:.4s ease;
+}
+
+.card:hover{
+  transform:translateY(-8px);
+}
+
+.field{margin-bottom:28px}
+
+label{
+  display:block;
+  font-size:12px;
+  font-weight:500;
+  margin-bottom:8px;
+  color:#333;
+}
+
+input,textarea{
+  width:100%;
+  border:1px solid rgba(0,0,0,0.15);
+  border-radius:10px;
+  padding:14px 16px;
+  font-size:15px;
+  font-family:'Inter',sans-serif;
+  outline:none;
+  transition:.3s ease;
+  background:#fafafa;
+}
+
+input:focus,textarea:focus{
+  border-color:#000;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(0,0,0,0.05);
+}
+
+textarea{
+  resize:none;
+  height:120px;
+}
+
+button{
+  width:100%;
+  margin-top:20px;
+  padding:18px;
+  background:#111;
+  color:#fff;
+  border:none;
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  cursor:pointer;
+  border-radius:10px;
+  transition:.3s ease;
+}
+
+button:hover{
+  background:#000;
+  transform:translateY(-2px);
+}
+
+/* RIGHT CONTENT */
+
+.right{
+  max-width:550px;
+}
+
+.brand-box{
+  display:inline-block;
+  padding:10px 24px;
+  border:1px solid rgba(0,0,0,0.15);
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(10px);
+  font-size:13px;
+  letter-spacing:.35em;
+  font-weight:600;
+  margin-bottom:25px;
+}
+
+.right h1{
+  font-family:'Playfair Display',serif;
+  font-size:3rem;
+  line-height:1.15;
+  margin-bottom:25px;
+}
+
+.right p{
+  font-size:16px;
+  line-height:1.8;
+  color:#444;
+  margin-bottom:40px;
+}
+
+.contact-info{
+  font-size:14px;
+  line-height:2;
+  color:#333;
+}
+
+.contact-info span{
+  display:block;
+}
+
+/* FOOTER */
+
+footer{
+  position:relative;
+  z-index:1;
+  text-align:center;
+  padding:20px;
+  font-size:13px;
+  color:#333;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter:blur(6px);
+  margin-top:40px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1000px){
+  .wrapper{
+    grid-template-columns:1fr;
+    gap:60px;
+  }
+  .right{
+    text-align:center;
+    margin:auto;
+  }
+}
+
+@media(max-width:600px){
+  .main{
+    padding:40px 20px;
+  }
+  .card{
+    padding:40px 25px;
+  }
+  .top-heading h2{
+    font-size:2.4rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+
+  <!-- CENTER TOP -->
+  <div class="top-heading">
+    <h2>Contact Us</h2>
+    <p>We’d love to hear from you. Send us your query below.</p>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- LEFT FORM -->
+    <div class="card">
+    <form action="https://formspree.io/f/mdaljkga" method="POST">
+        
+  <div class="field">
+    <label>Full Name</label>
+    <input type="text" name="name" placeholder="John Doe" required>
+  </div>
+
+  <div class="field">
+    <label>Email Address</label>
+    <input type="email" name="email" placeholder="you@email.com" required>
+  </div>
+
+  <div class="field">
+    <label>Phone (Optional)</label>
+    <input type="tel" name="phone" placeholder="+1 2387679856">
+  </div>
+
+  <div class="field">
+    <label>Your Query</label>
+    <textarea name="message" placeholder="Write your query here..." required></textarea>
+  </div>
+
+  <button type="submit">Send Message</button>
+
+</form>
+    </div>
+
+    <!-- RIGHT CONTENT -->
+    <div class="right">
+      <div class="brand-box">APPVIOUR</div>
+      <h1>Let’s Turn Your Vision Into Reality</h1>
+      <p>
+        At APPVIOUR, we create modern, high-performance digital solutions 
+        that transform ideas into meaningful brand experiences.
+        Precision. Performance. Perfection.
+      </p>
+
+      <div class="contact-info">
+        <span>📍 India, CU</span>
+        <span>✉ hello@appviour.com</span>
+        <span>⚡ Response time: Within 2 hours</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  © 2026 APPVIOUR — Designed & Developed with Precision.
+</footer>
+<script>
+(function() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:999999;';
+  document.body.appendChild(canvas);
+
+  let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  let cursor = { x: mouse.x, y: mouse.y };
+  let points = [];
+  const maxPoints = 40; 
+  
+  // High-End Palette: Off-white and deep charcoal for visibility on white backgrounds
+  const trailColor = 'rgba(180, 180, 180, 0.3)'; // Visible "Ghost" smoke
+  const ringColor = 'rgba(0, 0, 0, 0.15)';     // Subtle definition ring
+  const centerPoint = '#222';                   // Sharp professional focal point
+
+  const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+  resize();
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Smooth Liquid Physics
+    cursor.x += (mouse.x - cursor.x) * 0.15;
+    cursor.y += (mouse.y - cursor.y) * 0.15;
+
+    points.push({ x: cursor.x, y: cursor.y });
+    if (points.length > maxPoints) points.shift();
+
+    // 1. Ghost Smoke Trail
+    if (points.length > 1) {
+      for (let i = 0; i < points.length - 1; i++) {
+        const ratio = i / points.length;
+        ctx.beginPath();
+        ctx.moveTo(points[i].x, points[i].y);
+        ctx.lineTo(points[i+1].x, points[i+1].y);
+        
+        ctx.lineWidth = ratio * 8; 
+        ctx.strokeStyle = `rgba(150, 150, 150, ${ratio * 0.2})`; // Fading grey-white smoke
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+    }
+
+    // 2. Minimalist Cursor Ring
+    ctx.beginPath();
+    ctx.arc(cursor.x, cursor.y, 12, 0, Math.PI * 2);
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 3. Precision Center Dot
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = centerPoint;
+    ctx.fill();
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // 4. Personalized Green Shutter Redirect
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    // Ensure it's an internal link and not a mailto/tel link
+    if (link && link.href && !link.target && link.origin === window.location.origin) {
+      e.preventDefault();
+      
+      const shutter = document.createElement('div');
+      shutter.style.cssText = `
+        position: fixed; top: 0; left: -100%; width: 100%; height: 100%; 
+        background: #00FF00; z-index: 1000000; 
+        transition: transform 0.6s cubic-bezier(0.8, 0, 0.2, 1);
+        pointer-events: all;
+      `;
+      document.body.appendChild(shutter);
+      
+      // Trigger the "Green effect" before redirecting
+      requestAnimationFrame(() => {
+        shutter.style.transform = 'translateX(100%)';
+      });
+      
+      setTimeout(() => { 
+        window.location.href = link.href; 
+      }, 550);
+    }
+  });
+})();
+</script>
+</body>
+</html>
