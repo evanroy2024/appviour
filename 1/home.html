@@ -50,14 +50,14 @@
                             
                         </li>
                         <li class="menu-item">
-                            <a href="#about" class="item-link link1">About</a>
+                            <a href="" class="item-link link1">About</a>
                         </li>
                         <li class="menu-item has-child">
-                            <a href="#services" class="item-link link1">Services</a>
+                            <a href="" class="item-link link1">Services</a>
                            
                         </li>
                         <li class="menu-item has-child">
-                            <a href="#works" class="item-link link1">Works</a>
+                            <a href="" class="item-link link1">Works</a>
                            
                         </li>
                        
@@ -136,7 +136,7 @@
                     </div>
                 </div>
             </div>
-            <a href="#about" class="scroll-more">
+            <a href="" class="scroll-more">
                 <span class="fw-semibold link1">Scroll to Discover</span>
                 <i class="icon icon-long-arrow-alt-down-solid"></i>
             </a>
@@ -345,7 +345,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="services-image effectFade fadeUp" style="width: 600px;">
+                        <div class="services-image effectFade fadeUp" style="width: 100%;">
                             <img src="images/web.jpg" alt="">
                         </div>
                     </div>
@@ -1685,7 +1685,10 @@
 
 <div id="email-shortcut" class="email-container">
     <a href="mailto:hello@appviour.com" class="glossy-email-btn">
-        <span class="btn-text">Send an Email</span>
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#ffffff">
+    <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z"/>
+</svg>
+
     </a>
 </div>
 
@@ -1711,17 +1714,17 @@
     .email-container.active { transform: translateY(0); }
 
     .glossy-email-btn {
-        display: inline-block;
-        padding: 14px 35px;
-        border-radius: 50px;
-        background: linear-gradient(180deg, #333 0%, #000 50%, #000 100%);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.3);
-        text-decoration: none;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid #111;
-        transition: transform 0.2s ease;
-    }
+    display: inline-block;
+    padding: 14px 16px;
+    border-radius: 50px;
+    background: linear-gradient(180deg, #ffa94d 0%, #ff7a00 50%, #cc5e00 100%);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.3);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #ff7a00;
+    transition: transform 0.2s ease;
+}
     .glossy-email-btn::before {
         content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
         background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
@@ -1852,12 +1855,8 @@
   let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
   let cursor = { x: mouse.x, y: mouse.y };
   let points = [];
-  const maxPoints = 40; 
-  
-  // High-End Palette: Off-white and deep charcoal for visibility on white backgrounds
-  const trailColor = 'rgba(180, 180, 180, 0.3)'; // Visible "Ghost" smoke
-  const ringColor = 'rgba(0, 0, 0, 0.15)';     // Subtle definition ring
-  const centerPoint = '#222';                   // Sharp professional focal point
+  let clickBursts = [];
+  const maxPoints = 55;
 
   const resize = () => {
     canvas.width = window.innerWidth;
@@ -1870,73 +1869,171 @@
   });
   resize();
 
+  // Click burst effect
+  document.addEventListener('mousedown', e => {
+    clickBursts.push({
+      x: e.clientX, y: e.clientY,
+      r: 0, alpha: 1, rings: [
+        { r: 0, speed: 3.5 },
+        { r: 0, speed: 6 },
+        { r: 0, speed: 9 }
+      ]
+    });
+  });
+
+  function drawOrangeBurst(burst) {
+    burst.rings.forEach((ring, i) => {
+      ring.r += ring.speed;
+      const alpha = Math.max(0, burst.alpha - ring.r / 80);
+      if (alpha <= 0) return;
+      ctx.beginPath();
+      ctx.arc(burst.x, burst.y, ring.r, 0, Math.PI * 2);
+      ctx.strokeStyle = i === 0
+        ? `rgba(255, 120, 20, ${alpha * 0.9})`
+        : i === 1
+        ? `rgba(255, 180, 50, ${alpha * 0.5})`
+        : `rgba(255, 220, 100, ${alpha * 0.25})`;
+      ctx.lineWidth = i === 0 ? 2.5 : 1.5;
+      ctx.stroke();
+    });
+    burst.alpha -= 0.022;
+  }
+
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Smooth Liquid Physics
-    cursor.x += (mouse.x - cursor.x) * 0.15;
-    cursor.y += (mouse.y - cursor.y) * 0.15;
+
+    // Smooth liquid follow
+    cursor.x += (mouse.x - cursor.x) * 0.13;
+    cursor.y += (mouse.y - cursor.y) * 0.13;
 
     points.push({ x: cursor.x, y: cursor.y });
     if (points.length > maxPoints) points.shift();
 
-    // 1. Ghost Smoke Trail
+    // 1. Orange ember trail
     if (points.length > 1) {
-      for (let i = 0; i < points.length - 1; i++) {
+      for (let i = 1; i < points.length; i++) {
         const ratio = i / points.length;
+        const heat = Math.pow(ratio, 1.5);
+
+        // Core trail line
         ctx.beginPath();
-        ctx.moveTo(points[i].x, points[i].y);
-        ctx.lineTo(points[i+1].x, points[i+1].y);
-        
-        ctx.lineWidth = ratio * 8; 
-        ctx.strokeStyle = `rgba(150, 150, 150, ${ratio * 0.2})`; // Fading grey-white smoke
+        ctx.moveTo(points[i - 1].x, points[i - 1].y);
+        ctx.lineTo(points[i].x, points[i].y);
+        ctx.lineWidth = heat * 6;
+        ctx.strokeStyle = `rgba(255, ${Math.floor(90 + heat * 110)}, ${Math.floor(heat * 30)}, ${heat * 0.55})`;
         ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        // Outer glow
+        ctx.beginPath();
+        ctx.moveTo(points[i - 1].x, points[i - 1].y);
+        ctx.lineTo(points[i].x, points[i].y);
+        ctx.lineWidth = heat * 14;
+        ctx.strokeStyle = `rgba(255, 140, 20, ${heat * 0.08})`;
         ctx.stroke();
       }
     }
 
-    // 2. Minimalist Cursor Ring
+    // 2. Outer orbit ring with orange tint
     ctx.beginPath();
-    ctx.arc(cursor.x, cursor.y, 12, 0, Math.PI * 2);
-    ctx.strokeStyle = ringColor;
+    ctx.arc(cursor.x, cursor.y, 16, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 120, 30, 0.35)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 3. Inner sharp ring
+    ctx.beginPath();
+    ctx.arc(cursor.x, cursor.y, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 160, 50, 0.6)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // 3. Precision Center Dot
+    // 4. Hot center dot
+    const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 4);
+    grad.addColorStop(0, 'rgba(255, 255, 200, 1)');
+    grad.addColorStop(0.4, 'rgba(255, 160, 30, 1)');
+    grad.addColorStop(1, 'rgba(255, 80, 0, 0)');
     ctx.beginPath();
-    ctx.arc(mouse.x, mouse.y, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = centerPoint;
+    ctx.arc(mouse.x, mouse.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
     ctx.fill();
+
+    // 5. Click burst rings
+    clickBursts = clickBursts.filter(b => b.alpha > 0);
+    clickBursts.forEach(b => drawOrangeBurst(b));
 
     requestAnimationFrame(animate);
   }
   animate();
 
-  // 4. Personalized Green Shutter Redirect
+  // 6. Orange shutter redirect
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a');
-    // Ensure it's an internal link and not a mailto/tel link
     if (link && link.href && !link.target && link.origin === window.location.origin) {
       e.preventDefault();
-      
+
       const shutter = document.createElement('div');
       shutter.style.cssText = `
-        position: fixed; top: 0; left: -100%; width: 100%; height: 100%; 
-        background: #00FF00; z-index: 1000000; 
-        transition: transform 0.6s cubic-bezier(0.8, 0, 0.2, 1);
+        position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(135deg, #FF6B00, #FF9A3C);
+        z-index: 1000000;
+        transition: transform 0.55s cubic-bezier(0.8, 0, 0.2, 1);
         pointer-events: all;
       `;
       document.body.appendChild(shutter);
-      
-      // Trigger the "Green effect" before redirecting
+
       requestAnimationFrame(() => {
         shutter.style.transform = 'translateX(100%)';
       });
-      
-      setTimeout(() => { 
-        window.location.href = link.href; 
-      }, 550);
+
+      setTimeout(() => {
+        window.location.href = link.href;
+      }, 520);
     }
+  });
+})();
+</script>
+
+<!-- Zoom + Scroll Lock -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<style>
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+</style>
+<script>
+(function() {
+  // Block ctrl+scroll zoom
+  document.addEventListener('wheel', function(e) {
+    if (e.ctrlKey) e.preventDefault();
+    if (e.deltaX !== 0) e.preventDefault();
+  }, { passive: false });
+
+  // Block ctrl+plus/minus/0 zoom
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+      e.preventDefault();
+    }
+    // Block left/right arrow horizontal scroll
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+    }
+  });
+
+  // Block pinch zoom & horizontal swipe on touch
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+  document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+  document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+
+  // Force scroll back to 0 if somehow drifted
+  window.addEventListener('scroll', function() {
+    if (window.scrollX !== 0) window.scrollTo(window.scrollX, window.scrollY);
   });
 })();
 </script>
