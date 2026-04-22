@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CalcStack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+        :root {
+            --bg:       #F0F5FA;
+            --card:     #FFFFFF;
+            --inset:    #E4EDF5;
+            --border:   #C9DAE8;
+            --text:     #18162A;
+            --muted:    #64748B;
+            --accent:   #1350f8;
+            --accent-t: #DBEAFE;
+            --emerald:  #059669;
+            --emerald-t:#D1FAE5;
+            --rose:     #E11D48;
+            --rose-t:   #FFE4E6;
+            --amber:    #D97706;
+            --amber-t:  #FEF3C7;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100svh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── OVERLAY ── */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(24,22,42,0.5);
+            backdrop-filter: blur(14px);
+            z-index: 50;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding: 0 0 8px;
+        }
+        .overlay.hidden { display: none; }
+        .overlay.center { align-items: center; padding: 20px; }
+
+        .sheet {
+            background: var(--card);
+            border-radius: 28px 28px 20px 20px;
+            width: 100%; max-width: 440px;
+            padding: 12px 22px 36px;
+            animation: slideUp .25s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes slideUp { from { transform: translateY(28px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+        .pill {
+            width: 38px; height: 4px;
+            background: var(--border);
+            border-radius: 99px;
+            margin: 0 auto 20px;
+        }
+
+        .sheet-title {
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase;
+            color: var(--muted); text-align: center; margin-bottom: 22px;
+        }
+
+        /* ── FIELDS ── */
+        .field { margin-bottom: 18px; }
+        .label {
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 8px; display: block;
+        }
+
+        .seg { display: grid; gap: 6px; }
+        .seg-2 { grid-template-columns: 1fr 1fr; }
+        .seg-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .seg-btn {
+            padding: 13px 6px;
+            background: var(--inset);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px; font-weight: 600;
+            color: var(--muted);
+            cursor: pointer; transition: all .14s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .seg-btn.active {
+            background: var(--accent-t);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .plain-input {
+            width: 100%; padding: 14px 16px;
+            background: var(--inset);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px; font-weight: 500;
+            color: var(--text); outline: none;
+            transition: border-color .14s, background .14s;
+        }
+        .plain-input::placeholder { color: var(--muted); }
+        .plain-input:focus { border-color: var(--accent); background: var(--card); }
+
+        /* ── BUTTONS ── */
+        .btn {
+            width: 100%; padding: 16px;
+            border: none; border-radius: 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px; font-weight: 700;
+            letter-spacing: .03em; text-transform: uppercase;
+            cursor: pointer; transition: all .14s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-accent { background: var(--accent); color: #fff; }
+        .btn-accent:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+        .btn-emerald { background: var(--emerald); color: #fff; }
+        .btn-muted { background: var(--inset); color: var(--muted); }
+
+        /* ── HEADER ── */
+        header {
+            padding: 14px 18px 12px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .logo { font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+        .logo em { font-style: normal; color: var(--accent); }
+        .goal-badge {
+            display: inline-block; margin-top: 2px;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .06em; text-transform: uppercase;
+            color: var(--accent); background: var(--accent-t);
+            padding: 2px 8px; border-radius: 99px;
+        }
+        .hdr-actions { display: flex; gap: 7px; }
+        .hdr-btn {
+            padding: 6px 11px;
+            border-radius: 99px; border: 1.5px solid var(--border);
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .04em; text-transform: uppercase;
+            color: var(--muted); background: transparent;
+            cursor: pointer; transition: all .13s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hdr-btn:active { transform: scale(.94); }
+        .hdr-btn.del { color: var(--amber); border-color: var(--amber-t); background: var(--amber-t); }
+        .hdr-btn.rst { color: var(--rose); border-color: var(--rose-t); background: var(--rose-t); }
+
+        /* ── GRID ── */
+        #gameGrid {
+            padding: 12px 10px 130px;
+            display: grid; gap: 10px;
+        }
+
+        .pcard {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 12px 10px;
+            display: flex; flex-direction: column; gap: 9px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .pcard.winner {
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px var(--emerald-t);
+        }
+
+        .pname {
+            background: transparent; border: none; outline: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .09em; text-transform: uppercase;
+            color: var(--muted); text-align: center; width: 100%;
+        }
+
+        .num-input {
+            width: 100%; padding: 9px 8px;
+            background: var(--inset);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px; font-weight: 500;
+            color: var(--text); text-align: center; outline: none;
+            transition: border-color .13s;
+        }
+        .num-input:focus { border-color: var(--accent); background: var(--card); }
+        .num-input::placeholder { color: var(--muted); font-size: 12px; }
+
+        .add-btn {
+            padding: 9px 6px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: .05em; text-transform: uppercase;
+            cursor: pointer; transition: all .13s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .add-btn:active { transform: scale(.95); }
+
+        .rounds { display: flex; flex-direction: column; gap: 4px; min-height: 60px; }
+
+        .r-row {
+            padding: 7px 10px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .r-row.done { background: var(--inset); }
+        .r-row.locked {
+            background: repeating-linear-gradient(-45deg, var(--inset), var(--inset) 5px, var(--bg) 5px, var(--bg) 10px);
+            filter: blur(1.5px);
+        }
+        .r-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; font-weight: 500; color: var(--text);
+        }
+        .r-pts {
+            font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 99px;
+        }
+        .r-pts.pos { background: var(--emerald-t); color: var(--emerald); }
+        .r-pts.neg { background: var(--rose-t); color: var(--rose); }
+
+        .score-box {
+            background: var(--accent);
+            border-radius: 13px; padding: 10px 6px;
+            text-align: center; margin-top: 2px;
+        }
+        .score-lbl {
+            font-size: 8px; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase;
+            color: rgba(255,255,255,.6); margin-bottom: 2px;
+        }
+        .score-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px; font-weight: 600; color: #fff; line-height: 1;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 12px 14px 28px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        /* ── AWARD MODAL ── */
+        .award-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 14px;
+            background: var(--inset);
+            border-radius: 13px; gap: 12px;
+        }
+        .award-name {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .07em; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 2px;
+        }
+        .award-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px; font-weight: 600; color: var(--text);
+        }
+        .award-input {
+            width: 76px; padding: 10px 6px;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px; font-weight: 500;
+            text-align: center; color: var(--text); outline: none;
+            transition: border-color .13s; flex-shrink: 0;
+        }
+        .award-input:focus { border-color: var(--accent); }
+
+        .modal-warn {
+            font-size: 10px; font-weight: 700;
+            letter-spacing: .04em; text-transform: uppercase;
+            color: var(--rose); text-align: center; margin-top: 10px;
+        }
+
+        /* ── WIN ── */
+        .win-sheet {
+            background: var(--card);
+            border-radius: 28px; width: 100%; max-width: 360px;
+            padding: 36px 26px 32px; text-align: center;
+            animation: slideUp .25s cubic-bezier(.22,1,.36,1);
+        }
+        .win-icon { font-size: 52px; display: block; margin-bottom: 10px; }
+        .win-name {
+            font-size: 26px; font-weight: 800;
+            letter-spacing: -.02em; color: var(--emerald); margin-bottom: 24px;
+        }
+        .win-btns { display: flex; flex-direction: column; gap: 9px; }
+    </style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setupOverlay" class="overlay hidden">
+    <div class="sheet">
+        <div class="pill"></div>
+        <div class="sheet-title">New Game Setup</div>
+
+        <div class="field">
+            <label class="label">Game Type</label>
+            <div class="seg seg-2">
+                <button id="modeAlone" onclick="setMode('alone')" class="seg-btn active">Solo</button>
+                <button id="modeTeam"  onclick="setMode('team')"  class="seg-btn">Team</button>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Target Score</label>
+            <input id="targetSetup" type="number" placeholder="Optional goal…" class="plain-input">
+        </div>
+
+        <div class="field">
+            <label class="label">Number of Players</label>
+            <div class="seg seg-3">
+                <button onclick="setCount(2)" class="seg-btn count-btn">2</button>
+                <button onclick="setCount(3)" class="seg-btn count-btn">3</button>
+                <button onclick="setCount(4)" class="seg-btn count-btn">4</button>
+            </div>
+        </div>
+
+        <button id="confirmSetupBtn" disabled onclick="finalizeStart()" class="btn btn-accent">Confirm &amp; Start</button>
+    </div>
+</div>
+
+<!-- WIN -->
+<div id="winOverlay" class="overlay center hidden">
+    <div class="win-sheet">
+        <span class="win-icon">🏆</span>
+        <div id="winnerName" class="win-name">Player Wins!</div>
+        <div class="win-btns">
+            <button onclick="continueGame()" class="btn btn-emerald">Continue Playing</button>
+            <button onclick="resetGame()"    class="btn btn-muted">New Game</button>
+        </div>
+    </div>
+</div>
+
+<!-- AWARD -->
+<div id="awardModal" class="overlay hidden">
+    <div class="sheet">
+        <div class="pill"></div>
+        <div class="sheet-title">Award Points</div>
+        <div id="modalEntries" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+        <button id="confirmBtn" disabled onclick="confirmPoints()" class="btn btn-accent">Save Round</button>
+        <div id="modalWarning" class="modal-warn">Fill in points for every player</div>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header>
+    <div>
+        <div class="logo"><em>JADU</em></div>
+        <div id="headerTarget"></div>
+    </div>
+    <div class="hdr-actions">
+        <button onclick="deleteLastRound()" class="hdr-btn del">Undo</button>
+        <button onclick="resetGame()"       class="hdr-btn rst">Reset</button>
+    </div>
+</header>
+
+<main id="gameGrid"></main>
+
+<footer>
+    <button onclick="openUnlockModal()" class="btn btn-accent">Unlock Round</button>
+</footer>
+
+<script>
+    let selectedMode = 'alone';
+    let selectedCount = null;
+    let state = JSON.parse(localStorage.getItem('cs_ref_final_v7')) || null;
+
+    function setMode(mode) {
+        selectedMode = mode;
+        document.getElementById('modeAlone').classList.toggle('active', mode === 'alone');
+        document.getElementById('modeTeam').classList.toggle('active',  mode === 'team');
+    }
+
+    function setCount(count) {
+        selectedCount = count;
+        document.querySelectorAll('.count-btn').forEach((b, i) => {
+            b.classList.toggle('active', (i + 2) === count);
+        });
+        document.getElementById('confirmSetupBtn').disabled = false;
+    }
+
+    function finalizeStart() {
+        state = {
+            count: selectedCount,
+            mode: selectedMode,
+            target: document.getElementById('targetSetup').value || null,
+            players: Array.from({length: selectedCount}, (_, i) => ({ name: `Player ${i+1}`, inputs: [], score: 0 })),
+            gameEnded: false
+        };
+        document.getElementById('setupOverlay').classList.add('hidden');
+        save();
+    }
+
+    function save() {
+        localStorage.setItem('cs_ref_final_v7', JSON.stringify(state));
+        render();
+        checkWin();
+    }
+
+    function addValue(pIdx) {
+        const v1 = document.getElementById(`in1-${pIdx}`).value;
+        let finalVal = 0;
+        if (state.mode === 'team') {
+            const v2 = document.getElementById(`in2-${pIdx}`).value;
+            if (!v1 || !v2) return;
+            finalVal = Number(v1) + Number(v2);
+            document.getElementById(`in2-${pIdx}`).value = '';
+        } else {
+            if (!v1) return;
+            finalVal = Number(v1);
+        }
+        state.players[pIdx].inputs.push({ val: finalVal, awarded: false, pts: 0 });
+        document.getElementById(`in1-${pIdx}`).value = '';
+        save();
+    }
+
+    function deleteLastRound() {
+        if (!state || state.players[0].inputs.length === 0) return;
+        if (confirm("Remove the last round for everyone?")) {
+            state.players.forEach(p => {
+                const removed = p.inputs.pop();
+                if (removed && removed.awarded) p.score -= removed.pts;
+            });
+            save();
+        }
+    }
+
+    function openUnlockModal() {
+        const roundIdx = state.players[0].inputs.findIndex(item => !item.awarded);
+        if (roundIdx === -1) return;
+        document.getElementById('modalEntries').innerHTML = state.players.map((p, pIdx) => `
+            <div class="award-row">
+                <div>
+                    <div class="award-name">${p.name}</div>
+                    <div class="award-val">${p.inputs[roundIdx]?.val || 0}</div>
+                </div>
+                <input type="number" oninput="validateModal()" id="award-${pIdx}" placeholder="Pts" class="award-input">
+            </div>`).join('');
+        window.activeRound = roundIdx;
+        validateModal();
+        document.getElementById('awardModal').classList.remove('hidden');
+    }
+
+    function validateModal() {
+        const inputs = document.querySelectorAll('.award-input');
+        let allFilled = true;
+        inputs.forEach(input => { if (input.value === "") allFilled = false; });
+        document.getElementById('confirmBtn').disabled = !allFilled;
+        document.getElementById('modalWarning').classList.toggle('hidden', allFilled);
+    }
+
+    function confirmPoints() {
+        state.players.forEach((p, pIdx) => {
+            const pts = Number(document.getElementById(`award-${pIdx}`).value);
+            if (p.inputs[window.activeRound]) {
+                p.inputs[window.activeRound].pts = pts;
+                p.inputs[window.activeRound].awarded = true;
+                p.score += pts;
+            }
+        });
+        document.getElementById('awardModal').classList.add('hidden');
+        save();
+    }
+
+    function checkWin() {
+        if (!state.target || state.gameEnded) return;
+        const winner = state.players.find(p => p.score >= Number(state.target));
+        if (winner) {
+            document.getElementById('winnerName').innerText = `${winner.name} Wins!`;
+            document.getElementById('winOverlay').classList.remove('hidden');
+        }
+    }
+
+    function continueGame() {
+        state.gameEnded = true;
+        document.getElementById('winOverlay').classList.add('hidden');
+        save();
+    }
+
+    function resetGame() {
+        if (confirm("Start a new game?")) { localStorage.removeItem('cs_ref_final_v7'); location.reload(); }
+    }
+
+    function render() {
+        if (!state) return document.getElementById('setupOverlay').classList.remove('hidden');
+        const tgt = document.getElementById('headerTarget');
+        tgt.innerHTML = state.target ? `<span class="goal-badge">Goal · ${state.target}</span>` : '';
+        const grid = document.getElementById('gameGrid');
+        grid.style.gridTemplateColumns = `repeat(${state.count}, 1fr)`;
+        grid.innerHTML = state.players.map((p, pIdx) => `
+            <div class="pcard ${state.target && p.score >= Number(state.target) ? 'winner' : ''}">
+                <input type="text" value="${p.name}" onchange="state.players[${pIdx}].name=this.value; save();" class="pname">
+                <div class="score-box">
+                    <div class="score-lbl">Score</div>
+                    <div class="score-num">${p.score}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    <input id="in1-${pIdx}" type="number" class="num-input" placeholder="${state.mode === 'team' ? 'P1' : '…'}">
+                    ${state.mode === 'team' ? `<input id="in2-${pIdx}" type="number" class="num-input" placeholder="P2">` : ''}
+                    <button onclick="addValue(${pIdx})" class="add-btn">Add</button>
+                </div>
+                <div class="rounds">
+                    ${p.inputs.slice().reverse().map(item => `
+                        <div class="r-row ${item.awarded ? 'done' : 'locked'}">
+                            <span class="r-val">${item.awarded ? item.val : '?'}</span>
+                            ${item.awarded ? `<span class="r-pts ${item.pts >= 0 ? 'pos' : 'neg'}">${item.pts >= 0 ? '+' : ''}${item.pts}</span>` : ''}
+                        </div>`).join('')}
+                </div>
+            </div>`).join('');
+    }
+
+    render();
+</script>
+</body>
+</html>
