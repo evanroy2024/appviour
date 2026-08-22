@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operating System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1420; --surface:#171C29; --surface2:#1F2634; --line:#2B3244;
+    --ink:#EAEBEF; --ink-dim:#838BA0; --signal:#C9A467; --signal-dim:#C9A46722;
+    --p-priority:#C9A467; --p-semi:#7C9BC9; --p-casual:#5B6272;
+  }
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif;}
+  .font-display{font-family:'Space Grotesk',sans-serif;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+  .rail-seg{transition:filter .2s;}
+  .rail-seg:hover{filter:brightness(1.3);}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+  input[type=checkbox]{accent-color:var(--signal);}
+  .priority-btn{background:var(--bg); border:1px solid var(--line); color:var(--ink-dim);}
+  .priority-btn.active{color:var(--bg); border-color:transparent;}
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-10">
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-end justify-between border-b pb-5" style="border-color:var(--line)">
+      <div>
+        <p class="font-mono text-xs tracking-widest uppercase" style="color:var(--signal)">Daily Operating System</p>
+        <h1 class="font-display text-3xl font-bold mt-1">Execution Log</h1>
+      </div>
+      <div id="clock" class="font-mono text-sm text-right" style="color:var(--ink-dim)"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- SCHEDULE -->
+      <div class="lg:col-span-5 space-y-5">
+        <div class="flex justify-between rounded-lg p-1 gap-1" style="background:var(--surface); border:1px solid var(--line)" id="daySelector">
+          <button onclick="selectDay(1)" data-day="1" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Mon</button>
+          <button onclick="selectDay(2)" data-day="2" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Tue</button>
+          <button onclick="selectDay(3)" data-day="3" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Wed</button>
+          <button onclick="selectDay(4)" data-day="4" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Thu</button>
+          <button onclick="selectDay(5)" data-day="5" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Fri</button>
+          <button onclick="selectDay(6)" data-day="6" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Sat</button>
+          <button onclick="selectDay(0)" data-day="0" class="day-btn flex-1 py-2 rounded-md text-xs font-mono uppercase">Sun</button>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span id="dayTypeLabel" class="font-mono text-xs uppercase" style="color:var(--ink-dim)"></span>
+          <button onclick="toggleDayType()" class="font-mono text-xs px-3 py-1.5 rounded-md" style="background:var(--surface2); border:1px solid var(--line); color:var(--ink-dim)">Switch to <span id="switchLabel"></span></button>
+        </div>
+
+        <!-- Proportional time rail: segment width = block duration -->
+        <div id="rail" class="flex h-2.5 rounded-full overflow-hidden" style="background:var(--line)"></div>
+
+        <div id="scheduleContainer" class="space-y-2.5"></div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="lg:col-span-7 space-y-5">
+        <div class="flex items-center gap-3">
+          <svg id="progressRing" width="52" height="52" viewBox="0 0 44 44" class="shrink-0">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="4"/>
+            <circle id="progressArc" cx="22" cy="22" r="18" fill="none" stroke="var(--signal)" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/>
+            <text id="progressText" x="22" y="26" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--ink)">0/0</text>
+          </svg>
+          <div class="flex-1">
+            <h2 class="font-display text-base font-bold">Today's Execution</h2>
+            <p id="motivationText" class="text-[11px]" style="color:var(--ink-dim)"></p>
+          </div>
+          <button onclick="toggleModal(true)" class="px-3 py-1.5 text-slate-950 font-mono text-[11px] font-semibold rounded-md" style="background:var(--signal)">+ NEW BLOCK</button>
+        </div>
+        <div id="taskList" class="space-y-2"></div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER: mission -->
+    <div class="border-t pt-6" style="border-color:var(--line)">
+      <div class="rounded-xl p-6 grid grid-cols-1 sm:grid-cols-3 gap-6" style="background:var(--surface); border:1px solid var(--line)">
+        <div>
+          <p class="font-mono text-[11px] uppercase tracking-widest" style="color:var(--ink-dim)">Target · Dec 31</p>
+          <p class="font-display text-2xl font-bold mt-1" style="color:var(--signal)">$10,000</p>
+        </div>
+        <div class="sm:border-x sm:px-6" style="border-color:var(--line)">
+          <p class="font-mono text-[11px] uppercase tracking-widest" style="color:var(--ink-dim)">Income Streams</p>
+          <p class="font-display text-2xl font-bold mt-1">3</p>
+        </div>
+        <div>
+          <p class="font-mono text-[11px] uppercase tracking-widest" style="color:var(--ink-dim)">Why</p>
+          <p class="font-display text-lg font-bold mt-1 leading-snug">Life needs to fulfill dreams.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="taskModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="rounded-xl p-6 max-w-md w-full space-y-4" style="background:var(--surface); border:1px solid var(--line)">
+      <h3 class="font-display text-sm font-bold">Add Task Block</h3>
+      <form id="taskForm" onsubmit="handleAddTask(event)" class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Task Name</label>
+          <input type="text" id="taskName" required placeholder="e.g., Audit 10 restaurant sites" class="w-full rounded-md px-3 py-2 text-xs focus:outline-none" style="background:var(--bg); border:1px solid var(--line)">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Details</label>
+          <textarea id="taskDetails" rows="2" placeholder="e.g., Record Loom videos for mobile fix" class="w-full rounded-md px-3 py-2 text-xs focus:outline-none" style="background:var(--bg); border:1px solid var(--line)"></textarea>
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Target Outcome</label>
+          <input type="text" id="taskTarget" placeholder="e.g., Send 10 personalized pitches" class="w-full rounded-md px-3 py-2 text-xs focus:outline-none" style="background:var(--bg); border:1px solid var(--line)">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Priority</label>
+          <div class="flex gap-2" id="priorityPicker">
+            <button type="button" onclick="setPriority('priority')" data-p="priority" class="priority-btn flex-1 py-1.5 rounded-md text-[11px] font-mono">Priority</button>
+            <button type="button" onclick="setPriority('semi')" data-p="semi" class="priority-btn flex-1 py-1.5 rounded-md text-[11px] font-mono">Semi</button>
+            <button type="button" onclick="setPriority('casual')" data-p="casual" class="priority-btn flex-1 py-1.5 rounded-md text-[11px] font-mono">Need</button>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="toggleModal(false)" class="px-3 py-1.5 text-[11px] font-mono rounded-md" style="background:var(--surface2)">CANCEL</button>
+          <button type="submit" class="px-3 py-1.5 text-[11px] font-mono font-semibold rounded-md text-slate-950" style="background:var(--signal)">ADD BLOCK</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  // ---- Schedule config: durations drive real clock times + rail proportions ----
+  const outreachBlock = { title:'Cold Outreach (10 Pitches)', desc:'Audit sites, record 60s video fixes, send emails.' };
+  const contentBlock   = { title:'Content Creation', desc:'Turn client work & live fixes into visual posts.' };
+  const sundayBlocks   = [{ hrs:10, title:'SaaS & Marketing', desc:'Build, ship, and market your product. No client work today.', accent:true }];
+
+  function blocks(day, b3){
+    if (day === 0) return sundayBlocks;
+    return [
+      { hrs:1, title:'Warm-Up & Prep', desc:'Planning, audits, site selection' },
+      { hrs:1, title:'Passive Income Asset', desc:'Micro-SaaS, UI kits, templates' },
+      { hrs:2, title:b3.title, desc:b3.desc, accent:true },
+      { hrs:3, title:'Primary Client Work', desc:'Deep work focus on active contracts' },
+      { hrs:3, title:'Secondary Work / Growth', desc:'Overflow client work or personal skills' },
+    ];
+  }
+
+  function renderDay(list){
+    const totalHrs = list.reduce((s,b)=>s+b.hrs,0);
+    const rail = list.map((b,i) => `<div class="rail-seg h-full" style="width:${(b.hrs/totalHrs)*100}%; background:${b.accent ? 'var(--signal)' : 'var(--line)'}; filter:brightness(${1 + i*0.15})"></div>`).join('');
+    const cards = list.map(b => `
+        <div class="p-4 rounded-lg flex items-start gap-4" style="background:var(--surface); border:1px solid var(--line)">
+          <span class="font-mono text-xs font-semibold whitespace-nowrap pt-0.5 w-9" style="color:${b.accent?'var(--signal)':'var(--ink-dim)'}">${b.hrs}H</span>
+          <div>
+            <h3 class="text-base font-semibold" style="color:${b.accent?'var(--signal)':'var(--ink)'}">${b.title}</h3>
+            <p class="text-xs mt-0.5" style="color:var(--ink-dim)">${b.desc}</p>
+          </div>
+        </div>`).join('');
+    document.getElementById('rail').innerHTML = rail;
+    document.getElementById('scheduleContainer').innerHTML = cards;
+  }
+
+  function renderRestDay(){
+    document.getElementById('rail').innerHTML = `<div class="rail-seg h-full w-full" style="background:var(--line)"></div>`;
+    document.getElementById('scheduleContainer').innerHTML = `
+      <div class="p-8 rounded-lg text-center" style="background:var(--surface); border:1px dashed var(--line)">
+        <h3 class="font-display text-sm font-bold">Recharge</h3>
+        <p class="text-xs mt-1" style="color:var(--ink-dim)">No client work today. Rest is what makes tomorrow's output possible.</p>
+      </div>`;
+  }
+
+  // ---- Day type: work vs rest, defaults to Sunday=rest, overridable per day ----
+  let dayTypes = JSON.parse(localStorage.getItem('os_day_types')) || {};
+  let currentDay = new Date().getDay();
+  const getDayType = d => dayTypes[d] || 'work';
+
+  function toggleDayType(){
+    dayTypes[currentDay] = getDayType(currentDay) === 'work' ? 'rest' : 'work';
+    localStorage.setItem('os_day_types', JSON.stringify(dayTypes));
+    renderSchedule();
+  }
+
+  function renderSchedule(){
+    const type = getDayType(currentDay);
+    document.getElementById('dayTypeLabel').textContent = type === 'work' ? 'Work Day' : 'Rest Day';
+    document.getElementById('switchLabel').textContent = type === 'work' ? 'Rest' : 'Work';
+    if (type === 'rest') renderRestDay();
+    else renderDay(blocks(currentDay, currentDay===1||currentDay===3||currentDay===5 ? outreachBlock : contentBlock));
+  }
+
+  function selectDay(dayNum){
+    currentDay = dayNum;
+    document.querySelectorAll('.day-btn').forEach(btn => {
+      const active = parseInt(btn.dataset.day) === dayNum;
+      btn.style.background = active ? 'var(--surface2)' : 'transparent';
+      btn.style.color = active ? 'var(--ink)' : 'var(--ink-dim)';
+      btn.style.boxShadow = active ? 'inset 0 0 0 1px var(--line)' : 'none';
+    });
+    renderSchedule();
+  }
+
+  function tickClock(){
+    document.getElementById('clock').textContent = new Date().toLocaleString('en-US', { weekday:'short', hour:'2-digit', minute:'2-digit' });
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  // ---- Tasks (localStorage) ----
+  let tasks = JSON.parse(localStorage.getItem('os_tasks')) || [];
+  const save = () => { localStorage.setItem('os_tasks', JSON.stringify(tasks)); renderTasks(); };
+  const PRIORITY_COLOR = { priority:'var(--p-priority)', semi:'var(--p-semi)', casual:'var(--p-casual)' };
+  const PRIORITY_RANK  = { priority:0, semi:1, casual:2 };
+  let selectedPriority = 'casual';
+
+  function setPriority(p){
+    selectedPriority = p;
+    document.querySelectorAll('.priority-btn').forEach(btn => {
+      const active = btn.dataset.p === p;
+      btn.classList.toggle('active', active);
+      if (active) btn.style.background = PRIORITY_COLOR[p];
+      else btn.style.background = 'var(--bg)';
+    });
+  }
+
+  function toggleModal(show){
+    const modal = document.getElementById('taskModal');
+    modal.style.display = show ? 'flex' : 'none';
+    if (show) setPriority('casual');
+  }
+
+  function handleAddTask(e){
+    e.preventDefault();
+    tasks.push({ id: Date.now(), name: taskName.value, details: taskDetails.value, target: taskTarget.value, priority: selectedPriority, completed: false });
+    save(); taskForm.reset(); toggleModal(false);
+  }
+  const toggleTask = id => { tasks = tasks.map(t => t.id===id ? {...t, completed:!t.completed} : t); save(); };
+  const deleteTask = id => { tasks = tasks.filter(t => t.id!==id); save(); };
+
+  const messages = [
+    { min: 1,    text: "All clear. Strong finish." },
+    { min: 0.75, text: "Almost there — don't stop now." },
+    { min: 0.4,  text: "Good momentum. Keep going." },
+    { min: 0.01, text: "First one's done. Keep going." },
+    { min: 0,    text: "Nothing done yet. Pick one and start." },
+  ];
+
+  function renderTasks(){
+    const total = tasks.length, done = tasks.filter(t=>t.completed).length;
+    const pct = total ? done/total : 0;
+    const C = 113;
+    document.getElementById('progressArc').setAttribute('stroke-dashoffset', C * (1 - pct));
+    document.getElementById('progressText').textContent = `${done}/${total}`;
+    document.getElementById('motivationText').textContent = total
+      ? messages.find(m => pct >= m.min).text
+      : 'Add a task to start tracking today.';
+
+    const el = document.getElementById('taskList');
+    if (!tasks.length){
+      el.innerHTML = `<div class="p-8 rounded-lg text-center" style="border:1px dashed var(--line)"><p class="text-xs" style="color:var(--ink-dim)">No task blocks yet. Add one to start tracking.</p></div>`;
+      return;
+    }
+    const PRIORITY_LABEL = { priority:'Priority', semi:'Semi', casual:'Need' };
+    const PRIORITY_LETTER = { priority:'P', semi:'S', casual:'N' };
+    const sorted = [...tasks].sort((a,b) => PRIORITY_RANK[a.priority||'casual'] - PRIORITY_RANK[b.priority||'casual']);
+    el.innerHTML = sorted.map(t => {
+      const pKey = t.priority || 'casual';
+      const pColor = PRIORITY_COLOR[pKey];
+      return `
+      <div class="p-4 rounded-lg flex items-start gap-4 ${t.completed?'opacity-50':''}" style="background:var(--surface); border:1px solid var(--line); border-left:3px solid ${t.completed?'var(--line)':pColor}">
+        <button onclick="toggleTask(${t.id})" class="mt-1 w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="border:2px solid ${t.completed?'var(--signal)':'var(--ink-dim)'}; background:${t.completed?'var(--signal)':'transparent'}">
+          ${t.completed ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0F1420" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+        </button>
+        <div class="flex-1 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold ${t.completed?'line-through':''}">${t.name}</h4>
+            <div class="flex items-center gap-2.5 shrink-0">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center font-display font-bold text-xs" style="background:${pColor}22; color:${pColor}; border:1.5px solid ${pColor}">${PRIORITY_LETTER[pKey]}</span>
+              <button onclick="deleteTask(${t.id})" class="text-xs font-mono" style="color:var(--ink-dim)" onmouseover="this.style.color='var(--signal)'" onmouseout="this.style.color='var(--ink-dim)'">DEL</button>
+            </div>
+          </div>
+          ${t.details ? `<p class="text-xs" style="color:var(--ink-dim)">${t.details}</p>` : ''}
+          ${t.target ? `<span class="inline-block mt-0.5 font-mono text-[11px] px-2 py-0.5 rounded" style="background:var(--signal-dim); color:var(--signal)">${t.target}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  selectDay(currentDay);
+  renderTasks();
+</script>
+</body>
+</html>
