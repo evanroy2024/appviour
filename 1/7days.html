@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7-Day Sprints</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1420; --surface:#171C29; --surface2:#1F2634; --line:#2B3244;
+    --ink:#EAEBEF; --ink-dim:#838BA0; --signal:#C9A467; --signal-dim:#C9A46722;
+  }
+  body{background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif;}
+  .font-display{font-family:'Space Grotesk',sans-serif;}
+  .font-mono{font-family:'JetBrains Mono',monospace;}
+  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+  input[type=checkbox]{accent-color:var(--signal);}
+  .day-tab{transition:all .15s;}
+  .rail-seg{transition:filter .2s;}
+  .fade-in{animation:fade .25s ease;}
+  .card-hover{transition:border-color .15s, transform .15s;}
+  .card-hover:hover{border-color:var(--signal); transform:translateY(-1px);}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-10">
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="flex items-end justify-between border-b pb-5" style="border-color:var(--line)">
+      <div>
+        <p class="font-mono text-xs tracking-widest uppercase" style="color:var(--signal)">Daily Operating System</p>
+        <h1 id="pageTitle" class="font-display text-3xl font-bold mt-1">7-Day Sprints</h1>
+      </div>
+      <div id="clock" class="font-mono text-sm text-right" style="color:var(--ink-dim)"></div>
+    </div>
+
+    <div id="loadingState" class="text-center py-16 font-mono text-xs" style="color:var(--ink-dim)">Loading sprints...</div>
+
+    <!-- SPRINT LIST (home) -->
+    <div id="listPanel" class="hidden space-y-5">
+      <div class="flex items-center justify-between">
+        <p class="text-xs" style="color:var(--ink-dim)">Every goal gets its own clock, tasks, and daily notes.</p>
+        <button onclick="openSetup()" class="px-3 py-1.5 text-slate-950 font-mono text-[11px] font-semibold rounded-md shrink-0" style="background:var(--signal)">+ NEW SPRINT</button>
+      </div>
+      <div id="sprintCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- SETUP (new sprint) -->
+    <div id="setupPanel" class="hidden max-w-lg mx-auto space-y-5 py-6">
+      <div class="text-center space-y-1">
+        <h2 class="font-display text-xl font-bold">Set a 7-day target</h2>
+        <p class="text-xs" style="color:var(--ink-dim)">Pick one outcome. Seven days on the clock. No renegotiating the deadline.</p>
+      </div>
+      <div class="rounded-xl p-6 space-y-4" style="background:var(--surface); border:1px solid var(--line)">
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Target</label>
+          <input type="text" id="setupTitle" placeholder="e.g., Land 2 new clients" class="w-full rounded-md px-3 py-2 text-sm focus:outline-none" style="background:var(--bg); border:1px solid var(--line)">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Why it matters</label>
+          <textarea id="setupDesc" rows="2" placeholder="e.g., Need the runway to keep building the product" class="w-full rounded-md px-3 py-2 text-sm focus:outline-none" style="background:var(--bg); border:1px solid var(--line)"></textarea>
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Start date</label>
+          <input type="date" id="setupStart" class="w-full rounded-md px-3 py-2 text-sm focus:outline-none" style="background:var(--bg); border:1px solid var(--line)">
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="closeSetup()" class="flex-1 py-2.5 font-mono text-xs rounded-md" style="background:var(--surface2); color:var(--ink-dim)">CANCEL</button>
+          <button onclick="startSprint()" class="flex-1 py-2.5 text-slate-950 font-mono text-xs font-semibold rounded-md" style="background:var(--signal)">START THE CLOCK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE SPRINT -->
+    <div id="activePanel" class="hidden space-y-8">
+
+      <button onclick="goHome()" class="font-mono text-[11px] flex items-center gap-1.5" style="color:var(--ink-dim)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        ALL SPRINTS
+      </button>
+
+      <!-- Target + Countdown -->
+      <div class="rounded-xl p-6 grid grid-cols-1 sm:grid-cols-3 gap-6" style="background:var(--surface); border:1px solid var(--line)">
+        <div class="sm:col-span-2">
+          <p class="font-mono text-[11px] uppercase tracking-widest" style="color:var(--ink-dim)">Target</p>
+          <p id="targetTitleDisplay" class="font-display text-xl font-bold mt-1" style="color:var(--signal)"></p>
+          <p id="targetDescDisplay" class="text-xs mt-1.5" style="color:var(--ink-dim)"></p>
+        </div>
+        <div class="sm:border-l sm:pl-6" style="border-color:var(--line)">
+          <p class="font-mono text-[11px] uppercase tracking-widest" style="color:var(--ink-dim)">Time left</p>
+          <p id="countdownDisplay" class="font-mono text-xl font-bold mt-1"></p>
+        </div>
+      </div>
+
+      <!-- Overall progress -->
+      <div class="flex items-center gap-4">
+        <svg id="progressRing" width="52" height="52" viewBox="0 0 44 44" class="shrink-0">
+          <circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="4"/>
+          <circle id="progressArc" cx="22" cy="22" r="18" fill="none" stroke="var(--signal)" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/>
+          <text id="progressText" x="22" y="26" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="var(--ink)">0/0</text>
+        </svg>
+        <div class="flex-1">
+          <p class="font-display text-sm font-bold">Sprint progress</p>
+          <p id="progressSub" class="text-[11px]" style="color:var(--ink-dim)"></p>
+        </div>
+        <button onclick="confirmDelete()" class="font-mono text-[11px] px-3 py-1.5 rounded-md" style="background:var(--surface2); border:1px solid var(--line); color:var(--ink-dim)">DELETE SPRINT</button>
+      </div>
+
+      <!-- 7-day rail -->
+      <div id="rail" class="flex h-2.5 rounded-full overflow-hidden" style="background:var(--line)"></div>
+
+      <!-- Day tabs -->
+      <div class="flex justify-between rounded-lg p-1 gap-1" style="background:var(--surface); border:1px solid var(--line)" id="daySelector"></div>
+
+      <!-- Day content -->
+      <div id="dayContent" class="fade-in space-y-5"></div>
+
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'sprints:all';
+  let sprints = [];       // all sprints
+  let activeId = null;    // currently open sprint id
+  let currentDayIdx = 0;
+
+  function tickClock(){
+    document.getElementById('clock').textContent = new Date().toLocaleString('en-US', { weekday:'short', hour:'2-digit', minute:'2-digit' });
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  function todayISO(){
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d.toISOString().slice(0,10);
+  }
+
+  function blankDays(){
+    return Array.from({length:7}, () => ({ tasks: [], note: '' }));
+  }
+
+  async function loadSprints(){
+    try {
+      const result = await window.storage.get(STORAGE_KEY, false);
+      sprints = result ? JSON.parse(result.value) : [];
+    } catch (e) {
+      sprints = [];
+    }
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('setupStart').value = todayISO();
+    goHome();
+  }
+
+  async function saveSprints(){
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(sprints), false);
+    } catch (e) {
+      console.error('Storage error:', e);
+    }
+  }
+
+  function getActive(){
+    return sprints.find(s => s.id === activeId) || null;
+  }
+
+  function showPanel(name){
+    ['listPanel','setupPanel','activePanel'].forEach(id => {
+      document.getElementById(id).classList.toggle('hidden', id !== name);
+    });
+    document.getElementById('pageTitle').textContent = name === 'activePanel' ? (getActive()?.title || '7-Day Sprint') : '7-Day Sprints';
+  }
+
+  function goHome(){
+    activeId = null;
+    showPanel('listPanel');
+    renderList();
+  }
+
+  function openSetup(){
+    document.getElementById('setupTitle').value = '';
+    document.getElementById('setupDesc').value = '';
+    document.getElementById('setupStart').value = todayISO();
+    showPanel('setupPanel');
+    setTimeout(() => document.getElementById('setupTitle').focus(), 0);
+  }
+
+  function closeSetup(){ goHome(); }
+
+  function startSprint(){
+    const title = document.getElementById('setupTitle').value.trim();
+    if (!title) { document.getElementById('setupTitle').focus(); return; }
+    const desc = document.getElementById('setupDesc').value.trim();
+    const start = document.getElementById('setupStart').value || todayISO();
+    const sprint = { id: Date.now(), title, desc, start, days: blankDays() };
+    sprints.push(sprint);
+    saveSprints();
+    openSprint(sprint.id);
+  }
+
+  function openSprint(id){
+    activeId = id;
+    currentDayIdx = dayIndexForToday(getActive());
+    showPanel('activePanel');
+    renderActive();
+  }
+
+  function confirmDelete(){
+    const s = getActive();
+    if (!s) return;
+    if (confirm(`Delete "${s.title}" and all its tasks and notes? This can't be undone.`)) {
+      sprints = sprints.filter(sp => sp.id !== s.id);
+      saveSprints();
+      goHome();
+    }
+  }
+
+  function dayIndexForToday(sprint){
+    if (!sprint) return 0;
+    const start = new Date(sprint.start + 'T00:00:00');
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const diff = Math.floor((now - start) / 86400000);
+    return Math.min(Math.max(diff, 0), 6);
+  }
+
+  function sprintStats(sprint){
+    let total = 0, done = 0;
+    sprint.days.forEach(d => { total += d.tasks.length; done += d.tasks.filter(t=>t.completed).length; });
+    return { total, done, pct: total ? done/total : 0 };
+  }
+
+  function endDateOf(sprint){
+    const start = new Date(sprint.start + 'T00:00:00');
+    return new Date(start.getTime() + 7 * 86400000);
+  }
+
+  function formatCountdown(sprint){
+    const diff = endDateOf(sprint) - new Date();
+    if (diff <= 0) return 'Complete';
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    return `${d}d ${h}h left`;
+  }
+
+  // ---------- LIST VIEW ----------
+  function renderList(){
+    const el = document.getElementById('sprintCards');
+    if (!sprints.length){
+      el.innerHTML = `<div class="sm:col-span-2 p-10 rounded-lg text-center" style="border:1px dashed var(--line)">
+        <p class="text-xs" style="color:var(--ink-dim)">No sprints yet. Start one to put a target and a clock on it.</p>
+      </div>`;
+      return;
+    }
+    const sorted = [...sprints].sort((a,b) => b.id - a.id);
+    el.innerHTML = sorted.map(s => {
+      const stats = sprintStats(s);
+      const pct = Math.round(stats.pct * 100);
+      const countdown = formatCountdown(s);
+      const isDone = countdown === 'Complete';
+      return `
+      <div onclick="openSprint(${s.id})" class="card-hover cursor-pointer p-5 rounded-xl space-y-3" style="background:var(--surface); border:1px solid var(--line)">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="font-display text-base font-bold leading-snug">${escapeHtml(s.title)}</h3>
+          <span class="font-mono text-[10px] uppercase px-2 py-1 rounded shrink-0" style="background:${isDone?'var(--signal-dim)':'var(--surface2)'}; color:${isDone?'var(--signal)':'var(--ink-dim)'}">${countdown}</span>
+        </div>
+        ${s.desc ? `<p class="text-xs" style="color:var(--ink-dim)">${escapeHtml(s.desc)}</p>` : ''}
+        <div class="space-y-1.5">
+          <div class="h-1.5 rounded-full overflow-hidden" style="background:var(--line)">
+            <div class="h-full" style="width:${pct}%; background:var(--signal)"></div>
+          </div>
+          <p class="font-mono text-[11px]" style="color:var(--ink-dim)">${stats.done}/${stats.total} tasks done</p>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---------- ACTIVE SPRINT VIEW ----------
+  function renderActive(){
+    const sprint = getActive();
+    if (!sprint) { goHome(); return; }
+    document.getElementById('targetTitleDisplay').textContent = sprint.title;
+    document.getElementById('targetDescDisplay').textContent = sprint.desc || 'No description added.';
+    renderCountdown();
+    renderProgress();
+    renderRail();
+    renderDayTabs();
+    renderDayContent();
+  }
+
+  function renderCountdown(){
+    const sprint = getActive();
+    if (!sprint) return;
+    const el = document.getElementById('countdownDisplay');
+    const diff = endDateOf(sprint) - new Date();
+    if (diff <= 0) {
+      el.textContent = 'Sprint complete';
+      el.style.color = 'var(--signal)';
+      return;
+    }
+    el.style.color = 'var(--ink)';
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  }
+  setInterval(() => { if (activeId !== null) renderCountdown(); }, 1000);
+
+  function renderProgress(){
+    const sprint = getActive();
+    if (!sprint) return;
+    const { total, done, pct } = sprintStats(sprint);
+    const C = 113;
+    document.getElementById('progressArc').setAttribute('stroke-dashoffset', C * (1 - pct));
+    document.getElementById('progressText').textContent = `${done}/${total}`;
+    document.getElementById('progressSub').textContent = total
+      ? `${done} of ${total} tasks done across the sprint (${Math.round(pct*100)}%).`
+      : 'Add tasks to any day to start tracking.';
+  }
+
+  function renderRail(){
+    const sprint = getActive();
+    if (!sprint) return;
+    const todayIdx = dayIndexForToday(sprint);
+    const rail = sprint.days.map((d,i) => {
+      const total = d.tasks.length;
+      const done = d.tasks.filter(t=>t.completed).length;
+      const pct = total ? done/total : 0;
+      const isToday = i === todayIdx;
+      let color = 'var(--line)';
+      if (pct === 1 && total) color = 'var(--signal)';
+      else if (pct > 0) color = 'var(--surface2)';
+      return `<div class="rail-seg h-full flex-1" style="background:${color}; ${isToday?'box-shadow:inset 0 0 0 1px var(--signal);':''} border-right:1px solid var(--bg);"></div>`;
+    }).join('');
+    document.getElementById('rail').innerHTML = rail;
+  }
+
+  function renderDayTabs(){
+    const sprint = getActive();
+    if (!sprint) return;
+    const start = new Date(sprint.start + 'T00:00:00');
+    const todayIdx = dayIndexForToday(sprint);
+    const el = document.getElementById('daySelector');
+    el.innerHTML = sprint.days.map((d,i) => {
+      const date = new Date(start.getTime() + i*86400000);
+      const label = date.toLocaleDateString('en-US', { weekday:'short' });
+      const active = i === currentDayIdx;
+      const isToday = i === todayIdx;
+      return `<button onclick="selectDayTab(${i})" class="day-tab flex-1 py-2 rounded-md text-xs font-mono uppercase" style="background:${active?'var(--surface2)':'transparent'}; color:${active?'var(--ink)':'var(--ink-dim)'}; box-shadow:${active?'inset 0 0 0 1px var(--line)':'none'}">${label}${isToday?' <span style=\"color:var(--signal)\">•</span>':''}</button>`;
+    }).join('');
+  }
+
+  function selectDayTab(i){
+    currentDayIdx = i;
+    renderDayTabs();
+    renderDayContent();
+  }
+
+  function renderDayContent(){
+    const sprint = getActive();
+    if (!sprint) return;
+    const start = new Date(sprint.start + 'T00:00:00');
+    const date = new Date(start.getTime() + currentDayIdx*86400000);
+    const dateLabel = date.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+    const day = sprint.days[currentDayIdx];
+    const total = day.tasks.length, done = day.tasks.filter(t=>t.completed).length;
+
+    const taskRows = day.tasks.length ? day.tasks.map(t => `
+      <div class="p-3 rounded-lg flex items-start gap-3 ${t.completed?'opacity-50':''}" style="background:var(--surface); border:1px solid var(--line)">
+        <button onclick="toggleTask(${t.id})" class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0" style="border:2px solid ${t.completed?'var(--signal)':'var(--ink-dim)'}; background:${t.completed?'var(--signal)':'transparent'}">
+          ${t.completed ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0F1420" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+        </button>
+        <span class="flex-1 text-sm ${t.completed?'line-through':''}">${escapeHtml(t.name)}</span>
+        <button onclick="deleteTask(${t.id})" class="text-[11px] font-mono shrink-0" style="color:var(--ink-dim)">DEL</button>
+      </div>`).join('') : `<div class="p-6 rounded-lg text-center" style="border:1px dashed var(--line)"><p class="text-xs" style="color:var(--ink-dim)">No tasks for this day yet.</p></div>`;
+
+    document.getElementById('dayContent').innerHTML = `
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-base font-bold">${dateLabel}</h3>
+        <span class="font-mono text-xs" style="color:var(--ink-dim)">${done}/${total} done</span>
+      </div>
+      <form onsubmit="addTask(event)" class="flex gap-2">
+        <input type="text" id="newTaskInput" placeholder="Add a task for this day..." class="flex-1 rounded-md px-3 py-2 text-sm focus:outline-none" style="background:var(--surface); border:1px solid var(--line)">
+        <button type="submit" class="px-4 py-2 text-slate-950 font-mono text-[11px] font-semibold rounded-md shrink-0" style="background:var(--signal)">ADD</button>
+      </form>
+      <div class="space-y-2">${taskRows}</div>
+      <div class="pt-2">
+        <label class="block text-[11px] font-mono uppercase mb-1" style="color:var(--ink-dim)">Later note — what actually happened today</label>
+        <textarea id="dayNote" rows="3" placeholder="e.g., Sent 6 pitches, got 1 reply. Slower than planned but content batch is done." class="w-full rounded-md px-3 py-2 text-sm focus:outline-none" style="background:var(--surface); border:1px solid var(--line)" onblur="saveNote()">${escapeHtml(day.note)}</textarea>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s){
+    const div = document.createElement('div');
+    div.textContent = s || '';
+    return div.innerHTML;
+  }
+
+  function addTask(e){
+    e.preventDefault();
+    const input = document.getElementById('newTaskInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const sprint = getActive();
+    sprint.days[currentDayIdx].tasks.push({ id: Date.now(), name, completed: false });
+    saveSprints();
+    renderActive();
+    setTimeout(() => document.getElementById('newTaskInput')?.focus(), 0);
+  }
+
+  function toggleTask(id){
+    const sprint = getActive();
+    const day = sprint.days[currentDayIdx];
+    day.tasks = day.tasks.map(t => t.id===id ? {...t, completed: !t.completed} : t);
+    saveSprints();
+    renderActive();
+  }
+
+  function deleteTask(id){
+    const sprint = getActive();
+    const day = sprint.days[currentDayIdx];
+    day.tasks = day.tasks.filter(t => t.id!==id);
+    saveSprints();
+    renderActive();
+  }
+
+  function saveNote(){
+    const sprint = getActive();
+    if (!sprint) return;
+    sprint.days[currentDayIdx].note = document.getElementById('dayNote').value;
+    saveSprints();
+  }
+
+  loadSprints();
+</script>
+</body>
+</html>
